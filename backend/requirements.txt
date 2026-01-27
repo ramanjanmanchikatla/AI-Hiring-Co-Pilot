@@ -1,0 +1,41 @@
+# === Core Framework ===
+fastapi
+uvicorn
+
+# === Authentication & Security ===
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# === Environment Variables ===
+python-dotenv
+
+# === Machine Learning / NLP Models ===
+sentence-transformers
+scikit-learn
+torch
+transformers==4.35.0
+tokenizers==0.14.1
+
+# === File Processing ===
+pypdf
+python-docx
+
+# === Google & LangChain Integrations ===
+langchain
+langchain-core
+langchain-google-genai
+google-generativeai
+
+# === Data Handling ===
+pandas
+datasets
+opendatasets
+
+# === Visualization (optional, used in trainingmodel.ipynb)
+matplotlib
+
+# === Utilities ===
+requests
+sqlalchemy>=1.4.0
+aiosqlite>=0.17.0

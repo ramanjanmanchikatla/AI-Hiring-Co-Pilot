@@ -1,0 +1,62 @@
+# ---------- Python ----------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.env
+.venv/
+env/
+venv/
+*.db
+instance/
+build/
+dist/
+*.log
+
+# FastAPI static/uploads
+uploads/
+*.pdf
+*.docx
+
+# AI model & embeddings
+backend/output/
+output/
+models/
+*.bin
+*.safetensors
+*.pth
+*.pt
+backend/job_descriptions.csv
+langchain/
+output/
+models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# ---------- Node / React ----------
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# ---------- OS Generated ----------
+.DS_Store
+Thumbs.db
+
+# ---------- IDE / Editors ----------
+.vscode/
+.idea/
+*.swp
+
+# ---------- Coverage & caches ----------
+.coverage
+.cache/
+pytest_cache/

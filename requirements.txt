@@ -1,0 +1,15 @@
+python-dotenv
+sentence-transformers
+scikit-learn
+torch
+pypdf
+python-docx
+langchain
+langchain-google-genai
+google-generativeai
+langchain-core
+opendatasets
+pandas
+datasets
+matplotlib
+transformers[torch]==4.35.0
