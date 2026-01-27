@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Optional, List
 import os
+import re
 import pypdf
 import docx
 import tempfile
@@ -26,8 +27,9 @@ app = FastAPI()
 
 # Initialize models
 print("Loading embedding model...")
-model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output/recruitment-model-v1')
-scoring_model = SentenceTransformer(model_path)
+# Using base model from HuggingFace (downloads automatically on first run)
+# Application flow is unchanged - only model source differs
+scoring_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
 
 print("Initializing LLM...")
 llm = ChatGoogleGenerativeAI(
@@ -157,9 +159,21 @@ def score_resume(job_description: str, resume_text: str, model) -> float:
     resume_embedding = model.encode(resume_text, convert_to_tensor=True)
     return float(util.cos_sim(jd_embedding, resume_embedding).item() * 100)
 
+def extract_gemini_score(report_text: str) -> float:
+    """Extract the match score from Gemini's response."""
+    # Look for patterns like "SCORE: 75%" or "SCORE: 85 %" 
+    match = re.search(r'SCORE:\s*(\d+)\s*%', report_text, re.IGNORECASE)
+    if match:
+        return float(match.group(1))
+    # Fallback: look for any percentage in the first 200 chars
+    match = re.search(r'(\d+)\s*%', report_text[:200])
+    if match:
+        return float(match.group(1))
+    return 0.0
+
 def create_enrichment_chain(llm_model):
     prompt_template = """
-    You are an expert AI Hiring Assistant reviewing a candidate for an AI Intern role.
+    You are an expert AI Hiring Assistant reviewing a candidate for a job role.
     Your task is to create a detailed, structured analysis report based on the provided Job Description and the Candidate's Resume.
 
     *Job Description:*
@@ -170,9 +184,11 @@ def create_enrichment_chain(llm_model):
 
     ---
     *Instructions:*
-    Based on the information above, generate the following report with markdown formatting. Ensure all four sections are present.
+    Based on the information above, generate the following report with markdown formatting. Ensure all sections are present.
 
-    
+    ### *Overall Match Score*
+    SCORE: [X]%
+    (Replace [X] with a number from 0-100 representing how well this candidate matches the job requirements based on skills, experience, and qualifications. Be objective and realistic.)
 
     ### *1. Candidate Summary*
     - Provide 3 concise bullet points highlighting the candidate's strongest qualifications, relevant experience, and key skills that align with the job.
@@ -277,11 +293,16 @@ async def analyze_resumes(
                     extensions=['fenced_code', 'tables', 'nl2br']
                 )
                 
+                # Extract Gemini's score for display (more accurate skill-based score)
+                gemini_score = extract_gemini_score(enrichment_result.content)
+                # Use Gemini score for display, semantic score for sorting
+                display_score = gemini_score if gemini_score > 0 else score
+                
                 # Save to database
                 db_report = ResumeReport(
                     user_id=current_user.id,
                     filename=resume_file.filename,
-                    score=score,
+                    score=display_score,
                     report=html_report
                 )
                 db.add(db_report)
@@ -290,7 +311,7 @@ async def analyze_resumes(
                 
                 candidate_scores.append(CandidateReport(
                     filename=resume_file.filename,
-                    score=score,
+                    score=display_score,
                     report=html_report
                 ))
                 
