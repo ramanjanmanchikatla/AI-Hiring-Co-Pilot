@@ -4,6 +4,9 @@ import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import './App.css';
 
+// API URL from environment variable (for production deployment)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 // --- Auth Context ---
 const AuthContext = createContext(null);
 
@@ -52,7 +55,7 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/token', {
+      const response = await fetch(`${API_URL}/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -155,7 +158,7 @@ const RegisterPage = () => {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/register', {
+      const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, full_name: fullName, password }),
@@ -340,7 +343,7 @@ const Dashboard = () => {
     });
 
     try {
-      const response = await axios.post('http://localhost:8000/analyze-resumes', formData, {
+      const response = await axios.post(`${API_URL}/analyze-resumes`, formData, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },

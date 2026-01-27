@@ -1,0 +1,15 @@
+# Render deployment configuration for FastAPI backend
+
+services:
+  - type: web
+    name: ai-hiring-copilot-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
