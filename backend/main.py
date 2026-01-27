@@ -16,7 +16,7 @@ from markdown import markdown
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from sentence_transformers import SentenceTransformer, util
 from typing import List
 from fastapi import UploadFile
