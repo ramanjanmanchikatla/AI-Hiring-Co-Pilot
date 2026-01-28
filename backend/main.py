@@ -49,7 +49,8 @@ def get_scoring_model():
     global _scoring_model
     if _scoring_model is None:
         print("Loading embedding model (first request)...")
-        _scoring_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+        # Using smaller model (80MB) to fit in Render free tier memory limit
+        _scoring_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     return _scoring_model
 
 def get_llm():
