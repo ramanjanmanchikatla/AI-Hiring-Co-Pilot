@@ -25,19 +25,7 @@ from database import init_db, get_db, User, ResumeReport
 # Initialize FastAPI
 app = FastAPI()
 
-# Initialize models
-print("Loading embedding model...")
-# Using base model from HuggingFace (downloads automatically on first run)
-# Application flow is unchanged - only model source differs
-scoring_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-
-print("Initializing LLM...")
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    temperature=0.6,
-    google_api_key=os.getenv("GOOGLE_API_KEY")
-)
-# CORS middleware
+# CORS middleware - must be added before routes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -45,6 +33,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Models will be loaded lazily on first request to avoid Render timeout
+_scoring_model = None
+_llm = None
+
+def get_scoring_model():
+    global _scoring_model
+    if _scoring_model is None:
+        print("Loading embedding model (first request)...")
+        _scoring_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+    return _scoring_model
+
+def get_llm():
+    global _llm
+    if _llm is None:
+        print("Initializing LLM (first request)...")
+        _llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            temperature=0.6,
+            google_api_key=os.getenv("GOOGLE_API_KEY")
+        )
+    return _llm
 
 # Security
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
@@ -208,7 +218,6 @@ def create_enrichment_chain(llm_model):
         template=prompt_template,
         input_variables=["job_description", "resume_text"]
     ) | llm_model
-enrichment_chain = create_enrichment_chain(llm)
 
 # Routes
 @app.on_event("startup")
@@ -279,7 +288,13 @@ async def analyze_resumes(
             try:
                 # Extract and process the resume
                 resume_text = extract_text_from_file(file_path)
-                score = score_resume(job_description, resume_text, scoring_model)
+                
+                # Get lazy-loaded models
+                model = get_scoring_model()
+                llm = get_llm()
+                enrichment_chain = create_enrichment_chain(llm)
+                
+                score = score_resume(job_description, resume_text, model)
                 
                 # Generate AI report
                 enrichment_result = await enrichment_chain.ainvoke({
